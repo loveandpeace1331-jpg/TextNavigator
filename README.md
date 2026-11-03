@@ -41,7 +41,7 @@ Other scripts:
    snippet, the surrounding paragraph, and the rule that produced the value.
 4. Change the **check date** to re-resolve the register without re-uploading.
 
-Sample documents live in `../testDocs`. Loading all six (check date 10.03.2026)
+Sample documents live in `sample-docs/`. Loading all six (check date 10.03.2026)
 produces:
 
 | Contract | Supplier | Total (RUB) | Delivery | Unconfirmed |
@@ -107,7 +107,7 @@ be tested without a browser.
 npm test
 ```
 
-The suite loads `../testDocs`, asserts the expected table and answers, and checks:
+The suite loads the corpus from `sample-docs/` and asserts the expected table and answers, and checks:
 
 - file-name and upload-order independence;
 - every provenance quote is a real substring of its source file and points at a real

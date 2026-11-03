@@ -15,10 +15,19 @@ const DOC_NAMES = [
 
 const CHECK_DATE = new Date('2026-03-10T00:00:00Z')
 
+function corpusDir(): string {
+  const local = path.join(process.cwd(), 'sample-docs')
+  if (fs.existsSync(path.join(local, DOC_NAMES[0]))) return local
+  const sibling = path.join(process.cwd(), '..', 'testDocs')
+  if (fs.existsSync(path.join(sibling, DOC_NAMES[0]))) return sibling
+  throw new Error(`sample corpus not found in ${local} or ${sibling}`)
+}
+
 function loadCorpus(): UploadFile[] {
+  const dir = corpusDir()
   return DOC_NAMES.map((name) => ({
     name,
-    text: fs.readFileSync(path.join(process.cwd(), '..', 'testDocs', name), 'utf8'),
+    text: fs.readFileSync(path.join(dir, name), 'utf8'),
   }))
 }
 
