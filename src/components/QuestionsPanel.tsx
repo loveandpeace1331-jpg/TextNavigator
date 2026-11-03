@@ -48,8 +48,9 @@ function answerTarget(params: {
   return makeFieldTarget({
     key: `answer:${params.number}:${params.field}`,
     label: params.label,
-    context: `${params.number} · as of ${params.dateLabel}`,
-    valueCaption: 'Active value',
+    context: `${params.number} · на ${params.dateLabel}`,
+    valueCaption: 'Действующее значение',
+    contractNumber: params.number,
     status: params.fieldValue.status,
     valueLabel: formatFieldValue(params.field, params.fieldValue.value),
     reason: params.fieldValue.reason,
@@ -71,7 +72,7 @@ function QuestionCard({
     <div className="flex flex-col rounded-md border border-line bg-surface p-3.5">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-accent-50 text-[11px] font-semibold text-accent-700">
-          Q{index}
+          В{index}
         </span>
         <p className="text-sm font-medium text-ink">{question}</p>
       </div>
@@ -95,7 +96,7 @@ function AnswerButton({
     <button
       type="button"
       onClick={(event) => onInspect(target, event.currentTarget)}
-      title="Show the sources for this answer"
+      title="Показать источники для этого ответа"
       className={`flex w-full items-center justify-between gap-2 rounded border border-line bg-paper/70 px-3 py-2 text-left transition-colors hover:border-accent-100 hover:bg-accent-50 ${FOCUS_RING}`}
     >
       <span
@@ -107,7 +108,7 @@ function AnswerButton({
       >
         {children}
       </span>
-      <span className="shrink-0 text-xs text-ink-faint">sources</span>
+      <span className="shrink-0 text-xs text-ink-faint">основание</span>
     </button>
   )
 }
@@ -130,14 +131,14 @@ export function QuestionsPanel({
   return (
     <Card>
       <SectionHeader
-        title="Quick answers"
-        hint={`Computed from the active terms as of ${dateLabel}`}
+        title="Быстрые ответы"
+        hint={`Вычислено по действующим условиям на ${dateLabel}`}
       />
 
       <div className="grid gap-3 p-4 md:grid-cols-2">
         <QuestionCard
           index={1}
-          question={`What delivery deadline is active for contract STN-101 on ${dateLabel}?`}
+          question={`Какой срок поставки действует по договору STN-101 на ${dateLabel}?`}
         >
           <AnswerButton
             muted={answers.q1.status === 'no_data'}
@@ -147,7 +148,7 @@ export function QuestionsPanel({
               field: 'deliveryDeadline',
               fieldValue: answers.q1,
               dateLabel,
-              label: 'Delivery deadline',
+              label: 'Срок поставки',
             })}
             onInspect={onInspect}
           >
@@ -155,7 +156,7 @@ export function QuestionsPanel({
           </AnswerButton>
         </QuestionCard>
 
-        <QuestionCard index={2} question="What is the amount of contract STN-102?">
+        <QuestionCard index={2} question="Какова сумма договора STN-102?">
           <AnswerButton
             muted={answers.q2.status === 'no_data'}
             target={answerTarget({
@@ -164,7 +165,7 @@ export function QuestionsPanel({
               field: 'amount',
               fieldValue: answers.q2,
               dateLabel,
-              label: 'Total amount (RUB)',
+              label: 'Сумма, ₽',
             })}
             onInspect={onInspect}
           >
@@ -172,7 +173,7 @@ export function QuestionsPanel({
           </AnswerButton>
         </QuestionCard>
 
-        <QuestionCard index={3} question="What is the amount of contract STN-103?">
+        <QuestionCard index={3} question="Какова сумма договора STN-103?">
           <AnswerButton
             muted={answers.q3.status === 'no_data'}
             target={answerTarget({
@@ -181,7 +182,7 @@ export function QuestionsPanel({
               field: 'amount',
               fieldValue: answers.q3,
               dateLabel,
-              label: 'Total amount (RUB)',
+              label: 'Сумма, ₽',
             })}
             onInspect={onInspect}
           >
@@ -191,16 +192,16 @@ export function QuestionsPanel({
 
         <QuestionCard
           index={4}
-          question={`Which contracts have deliveries scheduled earlier than ${boundary} and are there any unconfirmed deadline changes?`}
+          question={`По каким договорам поставка запланирована раньше ${boundary} и есть ли несогласованные изменения срока?`}
         >
           <div className="space-y-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-                Deliveries earlier than {boundary}
+                Поставки раньше {boundary}
               </p>
               {earlierThan.length === 0 ? (
                 <p className="mt-1 text-sm text-ink-muted">
-                  No matching deliveries.
+                  Подходящих поставок нет.
                 </p>
               ) : (
                 <ul className="mt-1 divide-y divide-line rounded border border-line">
@@ -223,10 +224,10 @@ export function QuestionsPanel({
 
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-                Unconfirmed deadline changes
+                Несогласованные изменения срока
               </p>
               {unconfirmed.length === 0 ? (
-                <p className="mt-1 text-sm text-ink-muted">None.</p>
+                <p className="mt-1 text-sm text-ink-muted">Нет.</p>
               ) : (
                 <ul className="mt-1 space-y-1.5">
                   {unconfirmed.map((change, index) => (

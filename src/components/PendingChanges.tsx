@@ -5,18 +5,16 @@ import {
   Badge,
   Card,
   EVIDENCE_LABEL,
+  FIELD_LABEL,
   FOCUS_RING,
   InspectHandler,
+  RU_PLURAL,
   SectionHeader,
+  countRu,
   evidenceTone,
   formatFieldValue,
   makePendingTarget,
 } from './ui'
-
-const FIELD_LABEL: Record<PendingChange['field'], string> = {
-  amount: 'Total amount (RUB)',
-  deliveryDeadline: 'Delivery deadline',
-}
 
 function valueLabel(change: PendingChange, value: number | string | null): string {
   return formatFieldValue(change.field, value)
@@ -39,19 +37,19 @@ export function PendingChanges({
   return (
     <Card>
       <SectionHeader
-        title="Proposed / unconfirmed changes"
-        hint="Letters, drafts and unsigned amendments — not part of the active terms"
+        title="Предложенные / несогласованные изменения"
+        hint="Письма, проекты и неподписанные допсоглашения — не входят в действующие условия"
         aside={
           <span className="text-xs text-ink-muted">
-            {result.pendingChanges.length} item
-            {result.pendingChanges.length === 1 ? '' : 's'}
+            {countRu(result.pendingChanges.length, RU_PLURAL.record)}
           </span>
         }
       />
 
       {result.pendingChanges.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-muted">
-          No proposed or unconfirmed changes detected for the loaded documents.
+          По загруженным документам предложенных или несогласованных изменений
+          не обнаружено.
         </p>
       ) : (
         <div className="grid gap-3 p-4 md:grid-cols-2">

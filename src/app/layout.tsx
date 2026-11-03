@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'TextNavigator',
+  title: 'TextNavigator — реестр действующих условий договоров поставки',
   description:
     'Реестр договоров поставки: активные условия, предлагаемые изменения и проверяемые источники каждого значения.',
 }

@@ -4,9 +4,13 @@ import type { AnalysisResult, ContractSummary, PendingChange } from '@/lib/types
 import {
   Badge,
   Card,
+  DOC_STATUS_WORD,
+  FIELD_LABEL,
   FOCUS_RING,
   InspectHandler,
+  RU_PLURAL,
   SectionHeader,
+  countRu,
   formatDateISO,
   formatRub,
   makeFieldTarget,
@@ -29,8 +33,9 @@ function contractStatus(
   const active =
     contract.amount.status === 'active' ||
     contract.deliveryDeadline.status === 'active'
-  if (!active) return { label: 'No data', tone: 'muted' }
-  return { label: `Active · ${base ? base.status : 'signed'}`, tone: 'positive' }
+  if (!active) return { label: 'Нет данных', tone: 'muted' }
+  const statusWord = base ? DOC_STATUS_WORD[base.status] : 'подписан'
+  return { label: `Действует · ${statusWord}`, tone: 'positive' }
 }
 
 const CELL_BUTTON =
@@ -51,18 +56,18 @@ export function ContractTable({
   return (
     <Card>
       <SectionHeader
-        title="Contracts"
-        hint={`Active terms as of ${dateLabel}`}
+        title="Договоры"
+        hint={`Действующие условия на ${dateLabel}`}
         aside={
           <span className="text-xs text-ink-muted">
-            {contracts.length} contract{contracts.length === 1 ? '' : 's'}
+            {countRu(contracts.length, RU_PLURAL.contract)}
           </span>
         }
       />
 
       {contracts.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-muted">
-          No contracts detected yet. Load .txt files to build the register.
+          Договоры не обнаружены. Загрузите файлы .txt, чтобы построить реестр.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -70,19 +75,19 @@ export function ContractTable({
             <thead>
               <tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-muted">
                 <th scope="col" className="px-3 py-2.5 font-medium">
-                  Contract number
+                  Номер договора
                 </th>
                 <th scope="col" className="px-3 py-2.5 font-medium">
-                  Supplier
+                  Поставщик
                 </th>
                 <th scope="col" className="px-3 py-2.5 font-medium">
-                  Total amount (RUB) as of {dateLabel}
+                  Сумма, ₽ на {dateLabel}
                 </th>
                 <th scope="col" className="px-3 py-2.5 font-medium">
-                  Delivery deadline as of {dateLabel}
+                  Срок поставки на {dateLabel}
                 </th>
                 <th scope="col" className="px-3 py-2.5 font-medium">
-                  Status / Unconfirmed changes
+                  Статус / несогласованные изменения
                 </th>
               </tr>
             </thead>
@@ -93,6 +98,8 @@ export function ContractTable({
                 const supplier = contract.supplier
                 const [firstPending] = contract.pendingChanges
                 const status = contractStatus(result, contract)
+                const needsVerification =
+                  amount.status === 'no_data' || deadline.status === 'no_data'
 
                 return (
                   <tr
@@ -108,7 +115,7 @@ export function ContractTable({
 
                     <td className="px-3 py-3 text-ink">
                       {supplier.status === 'no_data' ? (
-                        <span className="italic text-ink-faint">no data</span>
+                        <span className="italic text-ink-faint">нет данных</span>
                       ) : (
                         supplier.value
                       )}
@@ -121,12 +128,13 @@ export function ContractTable({
                           onInspect(
                             makeFieldTarget({
                               key: `${contract.number}:amount`,
-                              label: 'Total amount (RUB)',
-                              context: `${contract.number} · as of ${dateLabel}`,
+                              label: FIELD_LABEL.amount,
+                              context: `${contract.number} · на ${dateLabel}`,
+                              contractNumber: contract.number,
                               status: amount.status,
                               valueLabel:
                                 amount.status === 'no_data'
-                                  ? 'no data'
+                                  ? 'нет данных'
                                   : formatRub(amount.value as number),
                               reason: amount.reason,
                               provenance: amount.provenance,
@@ -137,18 +145,18 @@ export function ContractTable({
                         }
                         title={
                           amount.status === 'no_data'
-                            ? (amount.reason ?? 'no data')
-                            : 'Show sources'
+                            ? (amount.reason ?? 'нет данных')
+                            : 'Показать источники'
                         }
                         aria-label={
                           amount.status === 'no_data'
-                            ? `Total amount for ${contract.number}: no data. ${amount.reason ?? ''}`
-                            : `Total amount for ${contract.number}: ${formatRub(amount.value as number)}. Show sources.`
+                            ? `Сумма, ₽ по договору ${contract.number}: нет данных. ${amount.reason ?? ''}`
+                            : `Сумма, ₽ по договору ${contract.number}: ${formatRub(amount.value as number)}. Показать источники.`
                         }
                         className={CELL_BUTTON}
                       >
                         {amount.status === 'no_data' ? (
-                          <span className="italic text-ink-faint">no data</span>
+                          <span className="italic text-ink-faint">нет данных</span>
                         ) : (
                           <span className="font-semibold tabular-nums">
                             {formatRub(amount.value as number)}
@@ -164,12 +172,13 @@ export function ContractTable({
                           onInspect(
                             makeFieldTarget({
                               key: `${contract.number}:deliveryDeadline`,
-                              label: 'Delivery deadline',
-                              context: `${contract.number} · as of ${dateLabel}`,
+                              label: FIELD_LABEL.deliveryDeadline,
+                              context: `${contract.number} · на ${dateLabel}`,
+                              contractNumber: contract.number,
                               status: deadline.status,
                               valueLabel:
                                 deadline.status === 'no_data'
-                                  ? 'no data'
+                                  ? 'нет данных'
                                   : formatDateISO(deadline.value as string),
                               reason: deadline.reason,
                               provenance: deadline.provenance,
@@ -180,18 +189,18 @@ export function ContractTable({
                         }
                         title={
                           deadline.status === 'no_data'
-                            ? (deadline.reason ?? 'no data')
-                            : 'Show sources'
+                            ? (deadline.reason ?? 'нет данных')
+                            : 'Показать источники'
                         }
                         aria-label={
                           deadline.status === 'no_data'
-                            ? `Delivery deadline for ${contract.number}: no data. ${deadline.reason ?? ''}`
-                            : `Delivery deadline for ${contract.number}: ${formatDateISO(deadline.value as string)}. Show sources.`
+                            ? `Срок поставки по договору ${contract.number}: нет данных. ${deadline.reason ?? ''}`
+                            : `Срок поставки по договору ${contract.number}: ${formatDateISO(deadline.value as string)}. Показать источники.`
                         }
                         className={CELL_BUTTON}
                       >
                         {deadline.status === 'no_data' ? (
-                          <span className="italic text-ink-faint">no data</span>
+                          <span className="italic text-ink-faint">нет данных</span>
                         ) : (
                           <span className="font-semibold tabular-nums">
                             {formatDateISO(deadline.value as string)}
@@ -203,6 +212,9 @@ export function ContractTable({
                     <td className="px-3 py-3">
                       <div className="flex flex-col items-start gap-1.5">
                         <Badge tone={status.tone}>{status.label}</Badge>
+                        {needsVerification ? (
+                          <Badge tone="warn">Требуется проверка</Badge>
+                        ) : null}
                         {contract.pendingChanges.length > 0 ? (
                           <button
                             type="button"
@@ -211,13 +223,10 @@ export function ContractTable({
                               onInspect(
                                 makeFieldTarget({
                                   key: `${contract.number}:pending`,
-                                  label: `${
-                                    firstPending.field === 'amount'
-                                      ? 'Total amount (RUB)'
-                                      : 'Delivery deadline'
-                                  } — proposed change`,
-                                  context: `${contract.number} · unconfirmed proposals`,
-                                  valueCaption: 'Proposed value',
+                                  label: `${FIELD_LABEL[firstPending.field]} — предложенное изменение`,
+                                  context: `${contract.number} · несогласованные предложения`,
+                                  contractNumber: contract.number,
+                                  valueCaption: 'Предложенное значение',
                                   status: 'active',
                                   valueLabel: formatPendingValue(firstPending),
                                   reason: null,
@@ -227,12 +236,11 @@ export function ContractTable({
                                 event.currentTarget,
                               )
                             }}
-                            title="Open the first unconfirmed change and list all proposals"
+                            title="Открыть первое несогласованное изменение и показать все предложения"
                             className={`inline-flex items-center gap-1 rounded text-left ${FOCUS_RING}`}
                           >
                             <Badge tone="warn">
-                              {contract.pendingChanges.length} unconfirmed change
-                              {contract.pendingChanges.length === 1 ? '' : 's'}
+                              {countRu(contract.pendingChanges.length, RU_PLURAL.change)} · не согласовано
                             </Badge>
                           </button>
                         ) : null}
@@ -250,7 +258,7 @@ export function ContractTable({
 }
 
 function formatPendingValue(change: PendingChange): string {
-  if (change.proposedValue === null) return 'no data'
+  if (change.proposedValue === null) return 'нет данных'
   if (change.field === 'amount') return formatRub(change.proposedValue as number)
   return formatDateISO(change.proposedValue as string)
 }

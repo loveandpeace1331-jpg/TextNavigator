@@ -67,23 +67,56 @@ export function SectionHeader({
 }
 
 export const DOC_KIND_LABEL: Record<DocKind, string> = {
-  contract: 'Contract',
-  amendment: 'Amendment',
-  draft_amendment: 'Draft amendment',
-  letter: 'Letter',
+  contract: 'Договор',
+  amendment: 'Допсоглашение',
+  draft_amendment: 'Проект допсоглашения',
+  letter: 'Письмо',
 }
 
 export const DOC_STATUS_LABEL: Record<DocStatus, string> = {
-  signed: 'Signed',
-  unsigned: 'Unsigned',
-  draft: 'Draft',
+  signed: 'Подписан',
+  unsigned: 'Не подписан',
+  draft: 'Проект',
+}
+
+export const DOC_STATUS_WORD: Record<DocStatus, string> = {
+  signed: 'подписан',
+  unsigned: 'не подписан',
+  draft: 'проект',
+}
+
+export const FIELD_LABEL: Record<'amount' | 'deliveryDeadline', string> = {
+  amount: 'Сумма, ₽',
+  deliveryDeadline: 'Срок поставки',
 }
 
 export const EVIDENCE_LABEL: Record<PendingChange['evidence'], string> = {
-  letter: 'Letter',
-  draft: 'Draft',
-  signed: 'Signed',
-  unsigned: 'Unsigned',
+  letter: 'Письмо',
+  draft: 'Проект',
+  signed: 'Подписан',
+  unsigned: 'Не подписан',
+}
+
+export type PluralForms = readonly [string, string, string]
+
+export const RU_PLURAL: Record<'contract' | 'document' | 'change' | 'record', PluralForms> = {
+  contract: ['договор', 'договора', 'договоров'],
+  document: ['документ', 'документа', 'документов'],
+  change: ['изменение', 'изменения', 'изменений'],
+  record: ['запись', 'записи', 'записей'],
+}
+
+export function pluralRu(count: number, forms: PluralForms): string {
+  const hundred = Math.abs(count) % 100
+  const last = hundred % 10
+  if (hundred > 10 && hundred < 20) return forms[2]
+  if (last > 1 && last < 5) return forms[1]
+  if (last === 1) return forms[0]
+  return forms[2]
+}
+
+export function countRu(count: number, forms: PluralForms): string {
+  return `${count} ${pluralRu(count, forms)}`
 }
 
 const AFFIRMATIVE: DocStatus[] = ['signed']
@@ -122,7 +155,7 @@ export function formatFieldValue(
   field: 'amount' | 'deliveryDeadline',
   value: number | string | null,
 ): string {
-  if (value === null) return 'no data'
+  if (value === null) return 'нет данных'
   if (field === 'amount') return formatRub(value as number)
   return formatDateISO(value as string)
 }
@@ -137,6 +170,7 @@ export interface DrawerTarget {
   reason: string | null
   provenance: Provenance[]
   pending: PendingChange[]
+  contractNumber: string | null
 }
 
 export function makeFieldTarget(params: {
@@ -149,33 +183,35 @@ export function makeFieldTarget(params: {
   reason: string | null
   provenance: Provenance[]
   pending?: PendingChange[]
+  contractNumber?: string | null
 }): DrawerTarget {
   return {
     key: params.key,
     label: params.label,
     context: params.context,
-    valueCaption: params.valueCaption ?? 'Active value',
+    valueCaption: params.valueCaption ?? 'Действующее значение',
     status: params.status,
     valueLabel: params.valueLabel,
     reason: params.reason,
     provenance: params.provenance,
     pending: params.pending ?? [],
+    contractNumber: params.contractNumber ?? null,
   }
 }
 
 export function makePendingTarget(change: PendingChange): DrawerTarget {
-  const label =
-    change.field === 'amount' ? 'Total amount (RUB)' : 'Delivery deadline'
+  const label = FIELD_LABEL[change.field]
   return {
     key: `pending:${change.contractNumber}:${change.field}:${change.source.fileName}`,
-    label: `${label} — proposed change`,
+    label: `${label} — предложенное изменение`,
     context: `${change.contractNumber} · ${change.source.fileName}`,
-    valueCaption: 'Proposed value',
+    valueCaption: 'Предложенное значение',
     status: change.proposedValue === null ? 'no_data' : 'active',
     valueLabel: formatFieldValue(change.field, change.proposedValue),
     reason: null,
     provenance: [change.source],
     pending: [],
+    contractNumber: change.contractNumber,
   }
 }
 

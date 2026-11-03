@@ -59,6 +59,21 @@ export default function Page() {
     setFiles((previous) => previous.filter((_, fileIndex) => fileIndex !== index))
   }, [])
 
+  const drawerContractNumber = drawer?.target.contractNumber ?? null
+
+  const relatedDocuments = useMemo(() => {
+    if (drawerContractNumber === null) return []
+    return result.documents.filter((doc) => doc.contractRef === drawerContractNumber)
+  }, [drawerContractNumber, result.documents])
+
+  const relatedPending = useMemo(() => {
+    if (drawerContractNumber === null) return []
+    return (
+      result.contracts.find((contract) => contract.number === drawerContractNumber)
+        ?.pendingChanges ?? []
+    )
+  }, [drawerContractNumber, result.contracts])
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-center lg:justify-between">
@@ -67,23 +82,24 @@ export default function Page() {
             TextNavigator
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-ink-muted">
-            Procurement register with traceable active terms. Only signed
-            amendments in force on the check date change a contract; letters and
-            drafts stay visible as unconfirmed proposals.
+            Реестр договоров поставки с проверяемыми действующими условиями.
+            Договор изменяют только подписанные допсоглашения, вступившие в силу
+            на дату проверки; письма и проекты остаются видимыми как
+            несогласованные предложения.
           </p>
         </div>
 
         <div className="flex items-center gap-4 rounded-lg border border-line bg-surface px-4 py-2.5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-              Check date
+              Дата проверки
             </p>
             <p className="mt-0.5 text-base font-semibold tabular-nums text-ink">
-              as of {formatDateISO(checkDate)}
+              на {formatDateISO(checkDate)}
             </p>
           </div>
           <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-wide text-ink-muted">
-            <span className="sr-only">Check date</span>
+            <span className="sr-only">Дата проверки</span>
             <input
               type="date"
               value={checkDate}
@@ -121,13 +137,15 @@ export default function Page() {
       </div>
 
       <p className="mt-6 text-xs text-ink-faint">
-        Parsing runs locally in the browser. File names and upload order do not
-        determine document priority.
+        Разбор выполняется локально в браузере. Имена файлов и порядок загрузки
+        не определяют приоритет документов.
       </p>
 
       <ProvenanceDrawer
         target={drawer?.target ?? null}
         returnFocus={drawer?.trigger ?? null}
+        relatedDocuments={relatedDocuments}
+        relatedPending={relatedPending}
         onClose={closeDrawer}
       />
     </main>

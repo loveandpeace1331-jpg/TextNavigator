@@ -8,6 +8,8 @@ import {
   DOC_KIND_LABEL,
   DOC_STATUS_LABEL,
   FOCUS_RING,
+  RU_PLURAL,
+  countRu,
   kindTone,
   statusTone,
 } from './ui'
@@ -54,11 +56,11 @@ export function Dropzone({
   return (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">
-        <h2 className="text-sm font-semibold tracking-tight">Documents</h2>
+        <h2 className="text-sm font-semibold tracking-tight">Документы</h2>
         <p className="text-xs text-ink-muted">
           {documents.length === 0
-            ? 'No files loaded'
-            : `${documents.length} file${documents.length === 1 ? '' : 's'} loaded`}
+            ? 'Файлы не загружены'
+            : `Загружено: ${countRu(documents.length, RU_PLURAL.document)}`}
         </p>
       </div>
 
@@ -80,18 +82,18 @@ export function Dropzone({
           }`}
         >
           <p className="text-sm font-medium text-ink">
-            Drag and drop contract files here
+            Перетащите файлы договоров сюда
           </p>
           <p className="mt-1 text-xs text-ink-muted">
-            Multiple .txt files. Document kind and status are detected from the
-            text, not the file name.
+            Несколько файлов .txt. Тип и статус документа определяются по
+            тексту, а не по имени файла.
           </p>
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             className={`mt-3 inline-flex items-center rounded-md border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-paper ${FOCUS_RING}`}
           >
-            Select files
+            Выбрать файлы
           </button>
           <input
             ref={inputRef}
@@ -99,6 +101,8 @@ export function Dropzone({
             multiple
             accept=".txt,text/plain"
             className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
             onChange={(event) => {
               void ingest(event.target.files)
               event.target.value = ''
@@ -108,14 +112,15 @@ export function Dropzone({
 
         {empty ? (
           <div className="mt-4 rounded-md border border-line bg-paper/60 px-4 py-5 text-sm text-ink-muted">
-            <p className="font-medium text-ink">No documents yet</p>
+            <p className="font-medium text-ink">Документы ещё не загружены</p>
             <p className="mt-1">
-              Load the six source files to build the register. Active terms,
-              proposals, and traceable evidence appear here automatically.
+              Загрузите шесть исходных файлов, чтобы построить реестр.
+              Действующие условия, предложения и обоснования появятся здесь
+              автоматически.
             </p>
           </div>
         ) : (
-          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Loaded documents">
+          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Загруженные документы">
             {documents.map((doc, index) => (
               <li
                 key={doc.id}
@@ -136,7 +141,7 @@ export function Dropzone({
                 <button
                   type="button"
                   onClick={() => onRemove(index)}
-                  aria-label={`Remove ${doc.fileName}`}
+                  aria-label={`Удалить ${doc.fileName}`}
                   className={`ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded text-ink-faint transition-colors hover:bg-zinc-200 hover:text-ink ${FOCUS_RING}`}
                 >
                   <span aria-hidden="true" className="text-base leading-none">
@@ -154,7 +159,7 @@ export function Dropzone({
             className="mt-4 rounded-md border border-warn-100 bg-warn-50 px-3 py-2.5"
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-warn-700">
-              Data warnings
+              Требуется проверка
             </p>
             <ul className="mt-1 space-y-1 text-sm text-warn-700">
               {warnings.map((warning, index) => (

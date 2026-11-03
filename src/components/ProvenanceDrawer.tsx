@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useId, useRef } from 'react'
-import type { PendingChange, Provenance } from '@/lib/types'
+import type { PendingChange, Provenance, SourceDoc } from '@/lib/types'
 import {
   Badge,
   DOC_KIND_LABEL,
   DOC_STATUS_LABEL,
   EVIDENCE_LABEL,
   FOCUS_RING,
+  type Tone,
   evidenceTone,
   formatDateISO,
   formatFieldValue,
@@ -67,7 +68,7 @@ function ProvenanceEntry({
           {DOC_STATUS_LABEL[entry.docStatus]}
         </Badge>
         <span className="ml-auto text-xs tabular-nums text-ink-muted">
-          {entry.docDate ? formatDateISO(entry.docDate) : 'no date'}
+          {entry.docDate ? formatDateISO(entry.docDate) : 'нет данных'}
         </span>
       </div>
 
@@ -75,7 +76,7 @@ function ProvenanceEntry({
 
       <div className="mt-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-          Exact quote
+          Точная цитата
         </p>
         <blockquote className="mt-1 border-l-2 border-accent-600 pl-2.5">
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
@@ -88,11 +89,11 @@ function ProvenanceEntry({
 
       <div className="mt-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-          Context paragraph
+          Абзац источника
         </p>
         {entry.quote === entry.paragraph ? (
           <p className="mt-1 text-xs italic text-ink-faint">
-            The exact quote is the full source paragraph.
+            Точная цитата совпадает с абзацем источника.
           </p>
         ) : (
           <div className="mt-1">
@@ -112,7 +113,7 @@ function PendingList({ changes }: { changes: PendingChange[] }) {
   return (
     <div className="mt-5">
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-        Unconfirmed changes for this field
+        Несогласованные изменения по этому полю
       </h3>
       <ul className="mt-2 space-y-2">
         {changes.map((change, index) => (
@@ -121,7 +122,7 @@ function PendingList({ changes }: { changes: PendingChange[] }) {
             className="rounded-md border border-warn-100 bg-warn-50 p-3"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="warn">unconfirmed</Badge>
+              <Badge tone="warn">не согласовано</Badge>
               <Badge tone={evidenceTone(change.evidence)}>
                 {EVIDENCE_LABEL[change.evidence]}
               </Badge>
@@ -148,13 +149,68 @@ function PendingList({ changes }: { changes: PendingChange[] }) {
   )
 }
 
+function RelatedDocuments({
+  documents,
+  provenance,
+  pending,
+}: {
+  documents: SourceDoc[]
+  provenance: Provenance[]
+  pending: PendingChange[]
+}) {
+  if (documents.length === 0) return null
+  return (
+    <div className="mt-5">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        Связанные документы
+      </h3>
+      <ul className="mt-2 space-y-2">
+        {documents.map((doc) => {
+          const proposal = pending.some(
+            (change) => change.source.fileName === doc.fileName,
+          )
+          const applied = provenance.some((entry) => entry.fileName === doc.fileName)
+          const mark = proposal ? 'предложение' : applied ? 'применён' : 'не применено'
+          const tone: Tone = proposal ? 'warn' : applied ? 'positive' : 'muted'
+          return (
+            <li
+              key={doc.id}
+              className="rounded-md border border-line bg-paper/50 px-3 py-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="truncate font-mono text-xs font-semibold text-ink">
+                  {doc.fileName}
+                </span>
+                <Badge tone={kindTone(doc.kind)}>
+                  {DOC_KIND_LABEL[doc.kind]}
+                </Badge>
+                <Badge tone={statusTone(doc.status)}>
+                  {DOC_STATUS_LABEL[doc.status]}
+                </Badge>
+                <Badge tone={tone}>{mark}</Badge>
+                <span className="ml-auto text-xs tabular-nums text-ink-muted">
+                  {doc.docDate ? formatDateISO(doc.docDate) : 'нет данных'}
+                </span>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export function ProvenanceDrawer({
   target,
   returnFocus,
+  relatedDocuments,
+  relatedPending,
   onClose,
 }: {
   target: DrawerTarget | null
   returnFocus: HTMLElement | null
+  relatedDocuments: SourceDoc[]
+  relatedPending: PendingChange[]
   onClose: () => void
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -229,7 +285,7 @@ export function ProvenanceDrawer({
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="Закрыть"
             className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-line text-ink-muted transition-colors hover:bg-paper hover:text-ink ${FOCUS_RING}`}
           >
             <span aria-hidden="true" className="text-lg leading-none">
@@ -263,12 +319,18 @@ export function ProvenanceDrawer({
             ) : null}
           </div>
 
+          <RelatedDocuments
+            documents={relatedDocuments}
+            provenance={target.provenance}
+            pending={relatedPending}
+          />
+
           <h3 className="mt-5 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-            Provenance chain — base → applied amendments
+            Обоснование: договор → применённые допсоглашения
           </h3>
           {target.provenance.length === 0 ? (
             <p className="mt-2 rounded-md border border-line bg-paper/60 px-3 py-2 text-sm text-ink-muted">
-              No source evidence was found in the loaded documents.
+              В загруженных документах не найдено подтверждающих источников.
             </p>
           ) : (
             <ol className="mt-2 space-y-2">

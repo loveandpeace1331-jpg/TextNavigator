@@ -69,20 +69,20 @@ function makeProvenance(doc: SourceDoc, quote: string | null, paragraph: string,
 }
 
 function ruling(doc: SourceDoc, field: 'amount' | 'deliveryDeadline', applied: boolean): string {
-  const label = field === 'amount' ? 'total amount' : 'delivery deadline'
+  const label = field === 'amount' ? 'сумма' : 'срок поставки'
   if (applied) {
     if (doc.kind === 'amendment' || doc.kind === 'draft_amendment') {
-      const section = field === 'amount' ? '§2.1' : '§3.1'
-      return `signed amendment №${doc.docNumber ?? '?'} supersedes contract ${section} (${label})`
+      const section = field === 'amount' ? 'п. 2.1' : 'п. 3.1'
+      return `подписанное допсоглашение №${doc.docNumber ?? '?'} изменяет ${section} договора (${label})`
     }
-    return `signed contract sets ${label}`
+    return `подписанный договор устанавливает ${label}`
   }
-  if (doc.kind === 'letter') return `supplier letter proposes a new ${label} (not applied)`
-  if (doc.kind === 'draft_amendment') return `draft amendment №${doc.docNumber ?? '?'} proposes a new ${label} (not applied)`
+  if (doc.kind === 'letter') return `письмо поставщика предлагает изменить ${label} (не применено)`
+  if (doc.kind === 'draft_amendment') return `проект допсоглашения №${doc.docNumber ?? '?'} предлагает изменить ${label} (не применено)`
   if (doc.status === 'signed') {
-    return `signed amendment №${doc.docNumber ?? '?'} takes effect ${doc.effectiveDate ?? 'later'} (after check date)`
+    return `подписанное допсоглашение №${doc.docNumber ?? '?'} вступает в силу ${doc.effectiveDate ?? 'позже'} (после даты проверки)`
   }
-  return `unsigned amendment №${doc.docNumber ?? '?'} proposes a new ${label} (not applied)`
+  return `неподписанное допсоглашение №${doc.docNumber ?? '?'} предлагает изменить ${label} (не применено)`
 }
 
 function fieldFromAmount(base: DocAnalysis, current: DocAnalysis[]): FieldValue<number> {
@@ -90,7 +90,7 @@ function fieldFromAmount(base: DocAnalysis, current: DocAnalysis[]): FieldValue<
   let value: number | null = first.value
   const provenance: Provenance[] =
     first.paragraph !== null
-      ? [makeProvenance(base.doc, first.quote, first.paragraph, `signed contract ${base.doc.contractRef ?? ''} sets total amount`)]
+      ? [makeProvenance(base.doc, first.quote, first.paragraph, `подписанный договор ${base.doc.contractRef ?? ''} устанавливает сумму`)]
       : []
 
   for (const item of current) {
@@ -115,7 +115,7 @@ function fieldFromDeadline(base: DocAnalysis, current: DocAnalysis[]): FieldValu
   let value: string | null = first.value
   const provenance: Provenance[] =
     first.paragraph !== null
-      ? [makeProvenance(base.doc, first.quote, first.paragraph, `signed contract ${base.doc.contractRef ?? ''} sets delivery deadline`)]
+      ? [makeProvenance(base.doc, first.quote, first.paragraph, `подписанный договор ${base.doc.contractRef ?? ''} устанавливает срок поставки`)]
       : []
 
   for (const item of current) {
@@ -142,7 +142,7 @@ function fieldFromSupplier(base: DocAnalysis): FieldValue<string> {
   }
   const paragraph = base.doc.paragraphs.find((p) => /[Пп]оставщик\s*:/.test(p.text))
   const provenance = paragraph
-    ? [makeProvenance(base.doc, paragraph.text, paragraph.text, `signed contract ${base.doc.contractRef ?? ''} names the supplier`)]
+    ? [makeProvenance(base.doc, paragraph.text, paragraph.text, `подписанный договор ${base.doc.contractRef ?? ''} называет поставщика`)]
     : []
   return { value: name, status: 'active', reason: null, provenance }
 }
@@ -183,10 +183,10 @@ export function analyzeDocuments(files: UploadFile[], checkDate: Date): Analysis
     const supplier = fieldFromSupplier(base)
 
     if (amount.status === 'no_data') {
-      warnings.push(`${number}: общая стоимость не указана в тексте договора.`)
+      warnings.push(`${number}: общая стоимость не указана в тексте договора — проверьте приложение № 1.`)
     }
     if (deliveryDeadline.status === 'no_data') {
-      warnings.push(`${number}: срок поставки не указан в тексте договора.`)
+      warnings.push(`${number}: срок поставки не указан в тексте договора — проверьте условия договора.`)
     }
 
     const pendingChanges: PendingChange[] = []
@@ -232,10 +232,10 @@ export function analyzeDocuments(files: UploadFile[], checkDate: Date): Analysis
   const known = new Set(contracts.map((c) => c.number))
   for (const doc of documents) {
     if (doc.kind === 'contract' && doc.contractRef === null) {
-      warnings.push(`${doc.fileName}: не удалось определить номер договора.`)
+      warnings.push(`${doc.fileName}: не удалось определить номер договора — проверьте документ.`)
     }
     if (doc.kind !== 'contract' && doc.contractRef !== null && !known.has(doc.contractRef)) {
-      warnings.push(`${doc.fileName}: ссылка на неизвестный договор ${doc.contractRef}.`)
+      warnings.push(`${doc.fileName}: ссылка на неизвестный договор ${doc.contractRef} — проверьте документ.`)
     }
   }
 
